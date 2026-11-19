@@ -106,6 +106,10 @@ const LAYOUTS = {
     { x: 0.3, y: 0.57, w: 0.19, h: 0.43 },
     { x: 0.49, y: 0.57, w: 0.19, h: 0.43 },
     { x: 0.68, y: 0.55, w: 0.32, h: 0.45 },
+    // Center pair fills the middle (x 0.30-0.68, y 0.23-0.57) so the
+    // collage covers the whole cover; the badge overlaps these panels.
+    { x: 0.3, y: 0.23, w: 0.19, h: 0.34 },
+    { x: 0.49, y: 0.23, w: 0.19, h: 0.34 },
   ],
 };
 
@@ -127,6 +131,23 @@ const state = {
   nextPhotoId: 1,
 };
 
+/* Varied default crops per panel slot, so panels do not all show the same
+   crop of the same photo. Faces sit near the top of both sample portraits,
+   so oy stays low; ox and zoom vary per slot. The center pair (slots 8-9)
+   crops toward the outer edges, where the badge does not cover them. */
+const PANEL_CROPS = [
+  { zoom: 1.35, ox: 0.32, oy: 0.5 },
+  { zoom: 1.4, ox: 0.6, oy: 0.18 },
+  { zoom: 1.45, ox: 0.5, oy: 0.2 },
+  { zoom: 1.25, ox: 0.68, oy: 0.2 },
+  { zoom: 1.3, ox: 0.42, oy: 0.5 },
+  { zoom: 1.2, ox: 0.55, oy: 0.6 },
+  { zoom: 1.4, ox: 0.65, oy: 0.45 },
+  { zoom: 1.25, ox: 0.35, oy: 0.55 },
+  { zoom: 1.5, ox: 0.25, oy: 0.18 },
+  { zoom: 1.5, ox: 0.75, oy: 0.18 },
+];
+
 function defaultPanels() {
   const n = LAYOUTS[state.layout].length;
   const first = state.photos.length ? state.photos[0].id : null;
@@ -134,11 +155,12 @@ function defaultPanels() {
   const out = [];
   for (let i = 0; i < n; i++) {
     const old = keep[i];
+    const crop = PANEL_CROPS[i % PANEL_CROPS.length];
     out.push({
       photoId: old && old.photoId != null ? old.photoId : first,
-      zoom: old ? old.zoom : 1.2,
-      ox: old ? old.ox : 0.5,
-      oy: old ? old.oy : 0.5,
+      zoom: old ? old.zoom : crop.zoom,
+      ox: old ? old.ox : crop.ox,
+      oy: old ? old.oy : crop.oy,
     });
   }
   return out;
@@ -548,15 +570,16 @@ function badgeInitials(title) {
 function drawBadge(ctx, W, H, grade) {
   const cx = W * 0.5;
   const cy = H * 0.47;
-  const bw = W * 0.36;
-  const bh = H * 0.3;
+  const bw = W * 0.32;
+  const bh = H * 0.26;
   ctx.save();
-  // Dark diamond backing so the badge reads cleanly over any panel gap.
+  // Dark diamond backing, larger than the badge, so the badge reads
+  // clearly where it overlaps the center panels' photos.
   ctx.beginPath();
-  ctx.moveTo(cx, cy - bh / 2 - 6);
-  ctx.lineTo(cx + bw / 2 + 6, cy);
-  ctx.lineTo(cx, cy + bh / 2 + 6);
-  ctx.lineTo(cx - bw / 2 - 6, cy);
+  ctx.moveTo(cx, cy - bh / 2 - 12);
+  ctx.lineTo(cx + bw / 2 + 12, cy);
+  ctx.lineTo(cx, cy + bh / 2 + 12);
+  ctx.lineTo(cx - bw / 2 - 12, cy);
   ctx.closePath();
   ctx.fillStyle = '#14081f';
   ctx.fill();
@@ -571,17 +594,17 @@ function drawBadge(ctx, W, H, grade) {
   ctx.lineTo(cx, cy + bh / 2);
   ctx.lineTo(cx - bw / 2, cy);
   ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,0.6)';
-  ctx.shadowBlur = Math.max(8, W * 0.01);
-  ctx.shadowOffsetY = Math.max(4, H * 0.006);
+  ctx.shadowColor = 'rgba(0,0,0,0.65)';
+  ctx.shadowBlur = Math.max(10, W * 0.016);
+  ctx.shadowOffsetY = Math.max(5, H * 0.01);
   ctx.fillStyle = grad;
   ctx.fill();
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, W * 0.002);
-  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = Math.max(3, W * 0.003);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.stroke();
   // Caption initials in bold system type.
   const initials = badgeInitials(state.title);
@@ -595,7 +618,7 @@ function drawBadge(ctx, W, H, grade) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, size * 0.08);
+  ctx.lineWidth = Math.max(2, size * 0.1);
   ctx.strokeStyle = '#14081f';
   ctx.strokeText(initials, cx, cy + size * 0.03);
   ctx.fillStyle = '#ffffff';
