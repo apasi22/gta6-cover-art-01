@@ -76,7 +76,8 @@ const GRADES = {
 };
 
 /* Layout slots live in panel-area space (x/y/w/h in 0..1). The panel area
-   sits below a sky strip; the caption band overlays its bottom. */
+   is the whole cover (full-bleed, y=0..1); the caption band overlays its
+   bottom. */
 const LAYOUTS = {
   hero: [
     { x: 0, y: 0, w: 0.62, h: 1 },
@@ -400,11 +401,13 @@ preview.addEventListener('click', (e) => {
 });
 
 // ---------- geometry ----------
-const SKY_H = 0.12; // sky strip height, as a fraction of canvas height
+// Panels are full-bleed: they fill the whole cover from y=0 to y=1.0.
+// (Round 8: the top sky strip with its skyline + slatted sun was removed
+// at the user's request — the user said it looked bad and cut the photos.)
 
 function panelRects(W, H) {
-  const areaY = H * SKY_H;
-  const areaH = H - areaY;
+  const areaY = 0;
+  const areaH = H;
   const gap = Math.max(2, Math.round(W * 0.006));
   return LAYOUTS[state.layout].map((s) => {
     const x = s.x * W + (s.x === 0 ? gap : gap / 2);
@@ -434,69 +437,9 @@ function drawPhotoInto(ctx, img, rect, zoom, ox, oy) {
   ctx.restore();
 }
 
-function drawSky(ctx, W, H, grade) {
-  const g = ctx.createLinearGradient(0, 0, 0, H * SKY_H + H * 0.12);
-  for (const [stop, color] of grade.sky) g.addColorStop(stop, color);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H * SKY_H + H * 0.12);
-}
-
-function drawSun(ctx, W, H, grade) {
-  const r = H * SKY_H * 0.8;
-  const cx = W * 0.5;
-  const cy = H * SKY_H * 0.55;
-  const g = ctx.createRadialGradient(cx, cy, r * 0.08, cx, cy, r);
-  g.addColorStop(0, grade.sun[0]);
-  g.addColorStop(0.55, grade.sun[1]);
-  g.addColorStop(1, grade.sun[2]);
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.clip();
-  // Slat cuts across the sun's lower half, filled with the sky gradient
-  // so they read as gaps.
-  const sky = ctx.createLinearGradient(0, 0, 0, H * SKY_H + H * 0.12);
-  for (const [stop, color] of grade.sky) sky.addColorStop(stop, color);
-  ctx.fillStyle = sky;
-  let y = cy + r * 0.05;
-  let band = r * 0.06;
-  while (y < cy + r) {
-    ctx.fillRect(cx - r, y, r * 2, band);
-    y += band + r * 0.16;
-    band *= 1.35;
-  }
-  ctx.restore();
-}
-
-function drawSkyline(ctx, W, H, grade) {
-  const rand = mulberry32(7);
-  const base = H * SKY_H;
-  const dark = '#14081f';
-  ctx.fillStyle = dark;
-  let x = 0;
-  while (x < W) {
-    const bw = W * (0.03 + rand() * 0.05);
-    const bh = H * SKY_H * (0.25 + rand() * 0.6);
-    ctx.fillRect(x, base - bh, bw, bh);
-    // Antenna on some towers.
-    if (rand() < 0.3) ctx.fillRect(x + bw / 2 - 1, base - bh - H * 0.03, 2, H * 0.03);
-    // Lit windows.
-    ctx.fillStyle = grade.accent2;
-    const cols = Math.max(1, Math.floor(bw / (W * 0.012)));
-    const rows = Math.max(1, Math.floor(bh / (H * 0.025)));
-    for (let c = 0; c < cols; c++) {
-      for (let r = 0; r < rows; r++) {
-        if (rand() < 0.22) {
-          ctx.fillRect(x + 3 + c * (W * 0.012), base - bh + 4 + r * (H * 0.025), 2.5, 3.5);
-        }
-      }
-    }
-    ctx.fillStyle = dark;
-    x += bw + W * 0.004;
-  }
-}
+// (Round 8: the top sky strip — drawSky, drawSun, drawSkyline — was
+// removed at the user's request. The cover is full-bleed now: the photo
+// panels start at y=0 and no skyline or slatted sun cuts the photos.)
 
 function drawPalm(ctx, x, y, s, color) {
   ctx.save();
@@ -715,11 +658,13 @@ function drawBadge(ctx, W, H, grade) {
 function renderCover(ctx, W, H, st, opts) {
   const grade = GRADES[st.grade];
   const markSelected = !opts || opts.markSelected !== false;
-  // Sky + skyline behind everything; the sun is drawn over the skyline so
-  // it stays clearly visible (never hidden behind the buildings).
-  drawSky(ctx, W, H, grade);
-  drawSkyline(ctx, W, H, grade);
-  drawSun(ctx, W, H, grade);
+  // Photo panels fill the whole cover edge to edge (full-bleed). There is
+  // no sky strip on top any more (removed in round 8): the panels start at
+  // y=0, so the photos are never cut by a skyline/sun band. A flat dark
+  // backing sits behind the panels so the thin gutters between them read
+  // as clean collage gutters.
+  ctx.fillStyle = '#14081f';
+  ctx.fillRect(0, 0, W, H);
 
   // Photo panels.
   const rects = panelRects(W, H);
