@@ -134,7 +134,7 @@ const state = {
   photos: [], // { id, name, img }
   layout: 'collage',
   grade: 'vivid',
-  title: 'VICE CITY',
+  title: '',
   subtitle: 'LEONIDA \u2022 EST. 2026',
   size: 'wide',
   panels: [], // { photoId, zoom, ox, oy } — one per layout slot
@@ -529,40 +529,46 @@ function drawPalm(ctx, x, y, s, color) {
 }
 
 function drawTitle(ctx, W, H, grade) {
-  const text = (state.title || 'VICE CITY').toUpperCase();
+  // The bottom title is optional: the default is empty, so a fresh cover
+  // has no white title line at the bottom (the user asked to remove it).
+  // If the user types a title in the editor it is drawn as before.
+  const text = (state.title || '').toUpperCase();
   const maxW = W * 0.92;
   const bandY = H * 0.86;
   let size = H * 0.115;
-  const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
-  ctx.font = font(size);
-  while (ctx.measureText(text).width > maxW && size > 12) {
-    size *= 0.94;
+  if (text) {
+    const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
     ctx.font = font(size);
+    while (ctx.measureText(text).width > maxW && size > 12) {
+      size *= 0.94;
+      ctx.font = font(size);
+    }
+    const grad = ctx.createLinearGradient(0, bandY - size, 0, bandY);
+    grad.addColorStop(0, grade.titleTop);
+    grad.addColorStop(0.55, grade.titleMid);
+    grad.addColorStop(1, grade.titleBot);
+    ctx.save();
+    ctx.translate(W / 2, bandY);
+    ctx.transform(1, 0, -0.06, 1, 0, 0);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, size * 0.085);
+    ctx.strokeStyle = '#14081f';
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = size * 0.12;
+    ctx.shadowOffsetY = size * 0.05;
+    ctx.strokeText(text, 0, 0);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = grad;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
   }
-  const grad = ctx.createLinearGradient(0, bandY - size, 0, bandY);
-  grad.addColorStop(0, grade.titleTop);
-  grad.addColorStop(0.55, grade.titleMid);
-  grad.addColorStop(1, grade.titleBot);
-  ctx.save();
-  ctx.translate(W / 2, bandY);
-  ctx.transform(1, 0, -0.06, 1, 0, 0);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, size * 0.085);
-  ctx.strokeStyle = '#14081f';
-  ctx.shadowColor = 'rgba(0,0,0,0.55)';
-  ctx.shadowBlur = size * 0.12;
-  ctx.shadowOffsetY = size * 0.05;
-  ctx.strokeText(text, 0, 0);
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.fillStyle = grad;
-  ctx.fillText(text, 0, 0);
-  ctx.restore();
 
-  // Subtitle on a tracked-out line under the title.
+  // Subtitle on a tracked-out line under the title. With no title the chip
+  // sits centred on the title band instead, so it does not float low.
   const sub = (state.subtitle || '').toUpperCase();
   if (sub) {
     const spaced = sub.split('').join('\u2009');
@@ -573,7 +579,7 @@ function drawTitle(ctx, W, H, grade) {
     ctx.textBaseline = 'top';
     const w = ctx.measureText(spaced).width;
     const pad = subSize * 0.9;
-    const chipY = bandY + size * 0.12;
+    const chipY = text ? bandY + size * 0.12 : bandY - subSize * 0.95;
     ctx.fillStyle = 'rgba(20,8,31,0.72)';
     roundRect(ctx, W / 2 - w / 2 - pad, chipY, w + pad * 2, subSize * 1.9, subSize * 0.5);
     ctx.fill();
@@ -613,7 +619,14 @@ function drawGrain(ctx, W, H) {
 // the same double outline. Original lettering in system fonts only — the
 // "VI" is the generic Roman numeral 6 and "Vice City" is plain text, not
 // Rockstar's mark. (The reference reads "Vice VII", an AI typo; the user
-// asked for "Vice City".)
+// asked for "Vice City".) Font match, checked against the reference
+// close-up: "VI" uses Noto Sans Black (the heaviest sans installed —
+// much thicker and blockier than the old Arial Black fallback, like the
+// reference's massive letters), and "Vice City" uses Noto Serif Display
+// Black Italic (the heaviest italic installed, strongly sheared so it
+// reads as a bold flowing script). No script/cursive font is installed
+// on this system (checked fc-list thoroughly), so this is the closest
+// system-font match to the reference's script.
 function drawBadge(ctx, W, H, grade) {
   const cx = W * 0.5;
   const cy = H * 0.46;
@@ -642,7 +655,7 @@ function drawBadge(ctx, W, H, grade) {
 
   // "VI": huge and wide, like the reference. Sized by height, then
   // stretched horizontally; clamped so it never exceeds 66% of the width.
-  const viFont = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
+  const viFont = (s) => `900 ${s}px "Noto Sans Black","Noto Sans",sans-serif`;
   let viSize = H * 0.30;
   ctx.font = viFont(viSize);
   const viNatural = ctx.measureText('VI').width;
@@ -663,9 +676,10 @@ function drawBadge(ctx, W, H, grade) {
 
   // "Vice City": script-style pink italic beneath "VI", slightly wider
   // than the "VI" (like the reference). No script font is installed, so
-  // the closest system look is a bold serif italic, sheared a little
-  // further for a handwritten slant.
-  const vcFont = (s) => `italic 700 ${s}px "Liberation Serif",Georgia,"DejaVu Serif",serif`;
+  // the closest system look is the heaviest italic serif available
+  // (Noto Serif Display Black Italic), sheared further for a flowing,
+  // handwritten slant.
+  const vcFont = (s) => `italic 900 ${s}px "Noto Serif Display",serif`;
   let vcSize = H * 0.115;
   ctx.font = vcFont(vcSize);
   while (ctx.measureText('Vice City').width > W * 0.62 && vcSize > 12) {
@@ -678,7 +692,7 @@ function drawBadge(ctx, W, H, grade) {
   vcGrad.addColorStop(1, '#ff5ce1');
   ctx.save();
   ctx.translate(cx, vcY);
-  ctx.transform(1, 0, -0.16, 1, 0, 0);
+  ctx.transform(1, 0, -0.22, 1, 0, 0);
   logoText('Vice City', 0, 0, vcFont, vcSize, vcGrad);
   ctx.restore();
 
