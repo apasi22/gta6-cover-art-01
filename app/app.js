@@ -606,73 +606,82 @@ function drawGrain(ctx, W, H) {
   ctx.restore();
 }
 
-// ---------- central badge (original diamond; initials follow the caption) ----------
-function badgeInitials(title) {
-  const words = (title || 'VICE CITY').toUpperCase().split(/\s+/).filter(Boolean);
-  if (words.length >= 2) return words[0][0] + words[1][0];
-  return (words[0] || 'VC').slice(0, 2);
-}
-
+// ---------- central logo: "VI" + "Vice City", like the user's reference ----------
+// Text-only logo, no diamond/background shape: a huge "VI" in a pink ->
+// orange gradient with a thick black outer outline and a white inner
+// outline, and "Vice City" beneath it in a pink script-style italic with
+// the same double outline. Original lettering in system fonts only — the
+// "VI" is the generic Roman numeral 6 and "Vice City" is plain text, not
+// Rockstar's mark. (The reference reads "Vice VII", an AI typo; the user
+// asked for "Vice City".)
 function drawBadge(ctx, W, H, grade) {
   const cx = W * 0.5;
-  const cy = H * 0.45;
-  // Huge central badge (width 60%, height 42% of the cover), dominating
-  // the center like the reference's giant logo — but an original diamond,
-  // not Rockstar's "VI" mark.
-  const bw = W * 0.6;
-  const bh = H * 0.42;
+  const cy = H * 0.46;
   ctx.save();
-  // Dark diamond backing, larger than the badge, so the badge reads
-  // clearly where it overlaps the center panels' photos.
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - bh / 2 - 16);
-  ctx.lineTo(cx + bw / 2 + 16, cy);
-  ctx.lineTo(cx, cy + bh / 2 + 16);
-  ctx.lineTo(cx - bw / 2 - 16, cy);
-  ctx.closePath();
-  ctx.fillStyle = '#14081f';
-  ctx.fill();
-  // Diamond with a vivid pink -> violet -> orange gradient.
-  const grad = ctx.createLinearGradient(cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2);
-  grad.addColorStop(0, '#ff2e88');
-  grad.addColorStop(0.5, '#a855f7');
-  grad.addColorStop(1, '#ff7a3c');
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - bh / 2);
-  ctx.lineTo(cx + bw / 2, cy);
-  ctx.lineTo(cx, cy + bh / 2);
-  ctx.lineTo(cx - bw / 2, cy);
-  ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,0.7)';
-  ctx.shadowBlur = Math.max(14, W * 0.02);
-  ctx.shadowOffsetY = Math.max(6, H * 0.012);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(4, W * 0.004);
-  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-  ctx.stroke();
-  // "VI" — the generic Roman numeral 6, the badge's own mark (not
-  // Rockstar's logo). Bold system type.
-  const initials = 'VI';
-  let size = bh * 0.42;
-  const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
-  ctx.font = font(size);
-  while (ctx.measureText(initials).width > bw * 0.6 && size > 12) {
-    size *= 0.92;
-    ctx.font = font(size);
-  }
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, size * 0.1);
-  ctx.strokeStyle = '#14081f';
-  ctx.strokeText(initials, cx, cy + size * 0.03);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(initials, cx, cy + size * 0.03);
+  ctx.shadowColor = 'rgba(0,0,0,0.65)';
+  ctx.shadowBlur = Math.max(12, W * 0.018);
+  ctx.shadowOffsetY = Math.max(5, H * 0.01);
+
+  // Double-outlined text: thick black outer ring, white inner ring,
+  // gradient fill — the reference logo's look. Reads clearly where it
+  // overlaps the center panels' photos.
+  function logoText(text, x, y, font, size, fill) {
+    ctx.font = font(size);
+    ctx.lineWidth = Math.max(3, size * 0.16);
+    ctx.strokeStyle = '#14081f';
+    ctx.strokeText(text, x, y);
+    ctx.lineWidth = Math.max(1.5, size * 0.05);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = fill;
+    ctx.fillText(text, x, y);
+  }
+
+  // "VI": huge and wide, like the reference. Sized by height, then
+  // stretched horizontally; clamped so it never exceeds 66% of the width.
+  const viFont = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
+  let viSize = H * 0.30;
+  ctx.font = viFont(viSize);
+  const viNatural = ctx.measureText('VI').width;
+  const viStretch = 1.6;
+  const viMaxW = W * 0.66;
+  if (viNatural * viStretch > viMaxW) viSize *= viMaxW / (viNatural * viStretch);
+  const viTop = cy - H * 0.10;
+  const viGrad = ctx.createLinearGradient(0, viTop - viSize * 0.5, 0, viTop + viSize * 0.5);
+  viGrad.addColorStop(0, '#ff5ce1');
+  viGrad.addColorStop(0.5, '#ff7ad9');
+  viGrad.addColorStop(0.75, '#ff9a3c');
+  viGrad.addColorStop(1, '#ffc93c');
+  ctx.save();
+  ctx.translate(cx, viTop);
+  ctx.transform(viStretch, 0, 0, 1, 0, 0);
+  logoText('VI', 0, 0, viFont, viSize, viGrad);
+  ctx.restore();
+
+  // "Vice City": script-style pink italic beneath "VI", slightly wider
+  // than the "VI" (like the reference). No script font is installed, so
+  // the closest system look is a bold serif italic, sheared a little
+  // further for a handwritten slant.
+  const vcFont = (s) => `italic 700 ${s}px "Liberation Serif",Georgia,"DejaVu Serif",serif`;
+  let vcSize = H * 0.115;
+  ctx.font = vcFont(vcSize);
+  while (ctx.measureText('Vice City').width > W * 0.62 && vcSize > 12) {
+    vcSize *= 0.94;
+    ctx.font = vcFont(vcSize);
+  }
+  const vcY = viTop + viSize * 0.36 + vcSize * 0.30;
+  const vcGrad = ctx.createLinearGradient(0, vcY - vcSize * 0.5, 0, vcY + vcSize * 0.5);
+  vcGrad.addColorStop(0, '#ff9ae2');
+  vcGrad.addColorStop(1, '#ff5ce1');
+  ctx.save();
+  ctx.translate(cx, vcY);
+  ctx.transform(1, 0, -0.16, 1, 0, 0);
+  logoText('Vice City', 0, 0, vcFont, vcSize, vcGrad);
+  ctx.restore();
+
   ctx.restore();
 }
 
