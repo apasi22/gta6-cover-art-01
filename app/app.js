@@ -63,7 +63,10 @@ const GRADES = {
     sun: ['#fff7c0', '#ffb347', '#ff2e63'],
     accent: '#ff2e63',
     accent2: '#00e5ff',
-    tint: 'rgba(255,46,99,0.12)',
+    tint: 'rgba(255,46,99,0.2)',
+    // Strong stylized photo filter (Vivid): high saturation + contrast so
+    // photos read like the reference's vibrant illustrated panels.
+    photoFilter: 'saturate(1.8) contrast(1.35) brightness(1.06)',
     scrim: 'rgba(16,4,32,0.88)',
     frame: '#ff2e63',
     titleTop: '#ffffff',
@@ -569,17 +572,20 @@ function badgeInitials(title) {
 
 function drawBadge(ctx, W, H, grade) {
   const cx = W * 0.5;
-  const cy = H * 0.47;
-  const bw = W * 0.32;
-  const bh = H * 0.26;
+  const cy = H * 0.45;
+  // Huge central badge (width 60%, height 42% of the cover), dominating
+  // the center like the reference's giant logo — but an original diamond,
+  // not Rockstar's "VI" mark.
+  const bw = W * 0.6;
+  const bh = H * 0.42;
   ctx.save();
   // Dark diamond backing, larger than the badge, so the badge reads
   // clearly where it overlaps the center panels' photos.
   ctx.beginPath();
-  ctx.moveTo(cx, cy - bh / 2 - 12);
-  ctx.lineTo(cx + bw / 2 + 12, cy);
-  ctx.lineTo(cx, cy + bh / 2 + 12);
-  ctx.lineTo(cx - bw / 2 - 12, cy);
+  ctx.moveTo(cx, cy - bh / 2 - 16);
+  ctx.lineTo(cx + bw / 2 + 16, cy);
+  ctx.lineTo(cx, cy + bh / 2 + 16);
+  ctx.lineTo(cx - bw / 2 - 16, cy);
   ctx.closePath();
   ctx.fillStyle = '#14081f';
   ctx.fill();
@@ -594,20 +600,21 @@ function drawBadge(ctx, W, H, grade) {
   ctx.lineTo(cx, cy + bh / 2);
   ctx.lineTo(cx - bw / 2, cy);
   ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,0.65)';
-  ctx.shadowBlur = Math.max(10, W * 0.016);
-  ctx.shadowOffsetY = Math.max(5, H * 0.01);
+  ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.shadowBlur = Math.max(14, W * 0.02);
+  ctx.shadowOffsetY = Math.max(6, H * 0.012);
   ctx.fillStyle = grad;
   ctx.fill();
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(3, W * 0.003);
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = Math.max(4, W * 0.004);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.stroke();
-  // Caption initials in bold system type.
-  const initials = badgeInitials(state.title);
+  // "VI" — the generic Roman numeral 6, the badge's own mark (not
+  // Rockstar's logo). Bold system type.
+  const initials = 'VI';
   let size = bh * 0.42;
   const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
   ctx.font = font(size);
@@ -643,8 +650,12 @@ function renderCover(ctx, W, H, st, opts) {
     const r = rects[i];
     if (p && p.photoId !== null) {
       const photo = photoById(p.photoId);
-      if (photo) drawPhotoInto(ctx, photo.img, r, p.zoom, p.ox, p.oy);
-      else {
+      if (photo) {
+        // Stylize the photo (Vivid grade): saturate + contrast, then reset.
+        ctx.filter = grade.photoFilter || 'none';
+        drawPhotoInto(ctx, photo.img, r, p.zoom, p.ox, p.oy);
+        ctx.filter = 'none';
+      } else {
         ctx.fillStyle = '#241636';
         ctx.fillRect(r.x, r.y, r.w, r.h);
       }
