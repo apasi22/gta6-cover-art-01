@@ -612,21 +612,37 @@ function drawGrain(ctx, W, H) {
   ctx.restore();
 }
 
-// ---------- central logo: "VI" + "Vice City", like the user's reference ----------
-// Text-only logo, no diamond/background shape: a huge "VI" in a pink ->
-// orange gradient with a thick black outer outline and a white inner
-// outline, and "Vice City" beneath it in a pink script-style italic with
-// the same double outline. Original lettering in system fonts only — the
-// "VI" is the generic Roman numeral 6 and "Vice City" is plain text, not
-// Rockstar's mark. (The reference reads "Vice VII", an AI typo; the user
-// asked for "Vice City".) Font match, checked against the reference
-// close-up: "VI" uses Noto Sans Black (the heaviest sans installed —
-// much thicker and blockier than the old Arial Black fallback, like the
-// reference's massive letters), and "Vice City" uses Noto Serif Display
-// Black Italic (the heaviest italic installed, strongly sheared so it
-// reads as a bold flowing script). No script/cursive font is installed
-// on this system (checked fc-list thoroughly), so this is the closest
-// system-font match to the reference's script.
+// Logo treatment (round 7, final): fonts + outline + shadow + gradients,
+// tuned so the lettering blends with the illustrated artwork instead of
+// sitting on it like a pasted sticker. Round 6 used Noto Sans Black (very
+// geometric, angular) with a 0.16x near-black outline and a heavy shadow —
+// the user said it still looked bad and did not blend with the pictures.
+// Three candidates were rendered and compared side by side against the
+// reference close-up: (A) DejaVu Sans Bold / Bold Italic — the roundest
+// bold sans installed, its soft organic curves echo the reference's
+// balloon lettering; (B) Liberation Sans Bold / Bold Italic — clean and
+// rounded but plainer, more "office font"; (C) Noto Sans Display Black —
+// still too geometric and blocky. (A) blends best, so it ships: a thin
+// plum outline (0.10x) and a gentler shadow let the artwork show through
+// around the letters, and the gradient runs pink -> orange across the
+// whole letter like the reference. No script/cursive font is installed
+// on this system (checked fc-list thoroughly), so the rounded DejaVu bold
+// italic, sheared for flow, is the closest system match to the
+// reference's plump script.
+const LOGO = {
+  viFont: (s) => `700 ${s}px "DejaVu Sans",sans-serif`,
+  viStretch: 1.45,
+  vcFont: (s) => `italic 700 ${s}px "DejaVu Sans",sans-serif`,
+  vcShear: -0.28,
+  outlineOuter: 0.10,
+  outlineColor: '#241026',
+  outlineInner: 0.035,
+  shadow: 'rgba(20,5,25,0.5)',
+  shadowBlur: (W) => Math.max(8, W * 0.012),
+  shadowOffY: (H) => Math.max(4, H * 0.008),
+  viStops: [[0, '#ff5ce1'], [0.35, '#ff7ad9'], [0.65, '#ff8a4d'], [1, '#ffb13c']],
+  vcStops: [[0, '#ff9ae2'], [0.5, '#ff7ad0'], [1, '#ff9a5c']],
+};
 function drawBadge(ctx, W, H, grade) {
   const cx = W * 0.5;
   const cy = H * 0.46;
@@ -634,19 +650,20 @@ function drawBadge(ctx, W, H, grade) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
-  ctx.shadowColor = 'rgba(0,0,0,0.65)';
-  ctx.shadowBlur = Math.max(12, W * 0.018);
-  ctx.shadowOffsetY = Math.max(5, H * 0.01);
+  ctx.shadowColor = LOGO.shadow;
+  ctx.shadowBlur = LOGO.shadowBlur(W);
+  ctx.shadowOffsetY = LOGO.shadowOffY(H);
 
-  // Double-outlined text: thick black outer ring, white inner ring,
+  // Double-outlined text: thin plum outer ring, white inner ring,
   // gradient fill — the reference logo's look. Reads clearly where it
-  // overlaps the center panels' photos.
+  // overlaps the center panels' photos, without the heavy black halo
+  // that made round 6 look pasted on.
   function logoText(text, x, y, font, size, fill) {
     ctx.font = font(size);
-    ctx.lineWidth = Math.max(3, size * 0.16);
-    ctx.strokeStyle = '#14081f';
+    ctx.lineWidth = Math.max(3, size * LOGO.outlineOuter);
+    ctx.strokeStyle = LOGO.outlineColor;
     ctx.strokeText(text, x, y);
-    ctx.lineWidth = Math.max(1.5, size * 0.05);
+    ctx.lineWidth = Math.max(1.5, size * LOGO.outlineInner);
     ctx.strokeStyle = '#ffffff';
     ctx.strokeText(text, x, y);
     ctx.fillStyle = fill;
@@ -655,19 +672,16 @@ function drawBadge(ctx, W, H, grade) {
 
   // "VI": huge and wide, like the reference. Sized by height, then
   // stretched horizontally; clamped so it never exceeds 66% of the width.
-  const viFont = (s) => `900 ${s}px "Noto Sans Black","Noto Sans",sans-serif`;
+  const viFont = LOGO.viFont;
   let viSize = H * 0.30;
   ctx.font = viFont(viSize);
   const viNatural = ctx.measureText('VI').width;
-  const viStretch = 1.6;
+  const viStretch = LOGO.viStretch;
   const viMaxW = W * 0.66;
   if (viNatural * viStretch > viMaxW) viSize *= viMaxW / (viNatural * viStretch);
   const viTop = cy - H * 0.10;
   const viGrad = ctx.createLinearGradient(0, viTop - viSize * 0.5, 0, viTop + viSize * 0.5);
-  viGrad.addColorStop(0, '#ff5ce1');
-  viGrad.addColorStop(0.5, '#ff7ad9');
-  viGrad.addColorStop(0.75, '#ff9a3c');
-  viGrad.addColorStop(1, '#ffc93c');
+  for (const [at, col] of LOGO.viStops) viGrad.addColorStop(at, col);
   ctx.save();
   ctx.translate(cx, viTop);
   ctx.transform(viStretch, 0, 0, 1, 0, 0);
@@ -676,10 +690,9 @@ function drawBadge(ctx, W, H, grade) {
 
   // "Vice City": script-style pink italic beneath "VI", slightly wider
   // than the "VI" (like the reference). No script font is installed, so
-  // the closest system look is the heaviest italic serif available
-  // (Noto Serif Display Black Italic), sheared further for a flowing,
-  // handwritten slant.
-  const vcFont = (s) => `italic 900 ${s}px "Noto Serif Display",serif`;
+  // the closest system look is a rounded bold sans italic, sheared
+  // further for a flowing, handwritten slant.
+  const vcFont = LOGO.vcFont;
   let vcSize = H * 0.115;
   ctx.font = vcFont(vcSize);
   while (ctx.measureText('Vice City').width > W * 0.62 && vcSize > 12) {
@@ -688,11 +701,10 @@ function drawBadge(ctx, W, H, grade) {
   }
   const vcY = viTop + viSize * 0.36 + vcSize * 0.30;
   const vcGrad = ctx.createLinearGradient(0, vcY - vcSize * 0.5, 0, vcY + vcSize * 0.5);
-  vcGrad.addColorStop(0, '#ff9ae2');
-  vcGrad.addColorStop(1, '#ff5ce1');
+  for (const [at, col] of LOGO.vcStops) vcGrad.addColorStop(at, col);
   ctx.save();
   ctx.translate(cx, vcY);
-  ctx.transform(1, 0, -0.22, 1, 0, 0);
+  ctx.transform(1, 0, LOGO.vcShear, 1, 0, 0);
   logoText('Vice City', 0, 0, vcFont, vcSize, vcGrad);
   ctx.restore();
 
