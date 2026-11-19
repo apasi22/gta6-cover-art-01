@@ -101,19 +101,23 @@ const LAYOUTS = {
     { x: 0.42, y: 0, w: 0.58, h: 0.55 },
     { x: 0.42, y: 0.55, w: 0.58, h: 0.45 },
   ],
+  /* GTA Collage (round 9): exactly 7 panels — one per sample photo, so no
+     photo ever repeats. The 10-panel version showed Marina Man, Heli City
+     and Bike Sunset twice, and the user said "semua fotonya sama" (all the
+     photos are the same). A tall hero on the left, three stacked panels in
+     the center column and three in the right column; the seams are
+     staggered between the two columns for a collage feel. The center panel
+     sits behind the "VI Vice City" badge, like the top entries' key-art
+     posters (the leaderboard's top covers use 5-9 panels, most often five,
+     with one photo per panel and a bold central logo). */
   collage: [
-    { x: 0, y: 0, w: 0.3, h: 0.65 },
-    { x: 0.3, y: 0, w: 0.38, h: 0.23 },
-    { x: 0.68, y: 0, w: 0.32, h: 0.28 },
-    { x: 0.68, y: 0.28, w: 0.32, h: 0.27 },
-    { x: 0, y: 0.65, w: 0.3, h: 0.35 },
-    { x: 0.3, y: 0.57, w: 0.19, h: 0.43 },
-    { x: 0.49, y: 0.57, w: 0.19, h: 0.43 },
-    { x: 0.68, y: 0.55, w: 0.32, h: 0.45 },
-    // Center pair fills the middle (x 0.30-0.68, y 0.23-0.57) so the
-    // collage covers the whole cover; the badge overlaps these panels.
-    { x: 0.3, y: 0.23, w: 0.19, h: 0.34 },
-    { x: 0.49, y: 0.23, w: 0.19, h: 0.34 },
+    { x: 0, y: 0, w: 0.3, h: 1 },
+    { x: 0.3, y: 0, w: 0.38, h: 0.24 },
+    { x: 0.68, y: 0, w: 0.32, h: 0.3 },
+    { x: 0.3, y: 0.24, w: 0.38, h: 0.34 },
+    { x: 0.68, y: 0.3, w: 0.32, h: 0.3 },
+    { x: 0.3, y: 0.58, w: 0.38, h: 0.42 },
+    { x: 0.68, y: 0.6, w: 0.32, h: 0.4 },
   ],
 };
 
@@ -144,22 +148,20 @@ const state = {
 };
 
 /* Varied default crops per panel slot, so panels do not all show the same
-   crop of the same photo. Portraits (Marina Man, Heli City, Beach Sunset,
-   Vice Bay Woman) have their subjects near the top, so oy stays low for
-   them; landscape shots (Bike Sunset, Speedboats) and the Collage sit
-   nearer the middle. The center pair (slots 8-9) crops toward the outer
-   edges, where the badge does not cover them. */
+   crop of the same photo. Panel i shows photo i, so crop i is tuned for
+   that photo: portraits (Marina Man, Heli City, Beach Sunset, Vice Bay
+   Woman) have their subjects near the top, so oy stays low for them;
+   landscape shots (Bike Sunset, Speedboats) and the Collage sit nearer
+   the middle. The center slot (3, Collage) crops toward the upper scenes,
+   so its edges still read around the badge that overlaps it. */
 const PANEL_CROPS = [
   { zoom: 1.35, ox: 0.32, oy: 0.5 },
   { zoom: 1.4, ox: 0.6, oy: 0.18 },
   { zoom: 1.45, ox: 0.5, oy: 0.2 },
-  { zoom: 1.25, ox: 0.68, oy: 0.2 },
+  { zoom: 1.4, ox: 0.5, oy: 0.25 },
   { zoom: 1.3, ox: 0.42, oy: 0.5 },
-  { zoom: 1.2, ox: 0.55, oy: 0.6 },
   { zoom: 1.4, ox: 0.65, oy: 0.45 },
   { zoom: 1.25, ox: 0.35, oy: 0.55 },
-  { zoom: 1.5, ox: 0.25, oy: 0.18 },
-  { zoom: 1.5, ox: 0.75, oy: 0.18 },
 ];
 
 function defaultPanels() {
