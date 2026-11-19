@@ -3,21 +3,92 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
-<link rel="stylesheet" href="./style.css">
+<title>Vice Cover Studio — GTA-style cover art maker</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
+<header class="topbar">
+  <div class="brand">
+    <h1>VICE COVER STUDIO</h1>
+    <p>Turn your photos into GTA-style cover art. Your photos never leave your machine.</p>
+  </div>
+  <ol class="steps">
+    <li><b>1</b> Photo</li>
+    <li><b>2</b> Layout</li>
+    <li><b>3</b> Export</li>
+  </ol>
+</header>
+<main>
+  <section class="preview-wrap">
+    <canvas id="preview" width="960" height="540"></canvas>
+    <p class="hint" id="previewHint">Click a panel in the preview to select it, then crop it below.</p>
   </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
+  <aside class="controls">
+    <section class="card" id="photosCard">
+      <h2>1 &middot; Photos</h2>
+      <label class="filebtn">Add your photos
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      </label>
+      <div class="samples">
+        <button id="sampleBoulevard" type="button">Sample: Boulevard</button>
+        <button id="samplePier" type="button">Sample: Pier</button>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </section>
+    <section class="card">
+      <h2>2 &middot; Layout &amp; panels</h2>
+      <div class="layouts" id="layouts">
+        <button type="button" data-layout="hero">Hero split</button>
+        <button type="button" data-layout="quad">Quad</button>
+        <button type="button" data-layout="strip">Strip</button>
+        <button type="button" data-layout="poster">Poster</button>
+      </div>
+      <div class="panelctl">
+        <label>Panel
+          <select id="panelSelect"></select>
+        </label>
+        <label>Photo
+          <select id="photoSelect"></select>
+        </label>
+        <label>Zoom
+          <input type="range" id="zoomRange" min="1" max="2.5" step="0.01" value="1.2">
+        </label>
+        <label>Position X
+          <input type="range" id="oxRange" min="0" max="1" step="0.01" value="0.5">
+        </label>
+        <label>Position Y
+          <input type="range" id="oyRange" min="0" max="1" step="0.01" value="0.5">
+        </label>
+        <button id="fillAll" type="button">Use this photo in every panel</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>3 &middot; Caption &amp; grade</h2>
+      <label>Title
+        <input type="text" id="titleInput" value="VICE CITY" maxlength="24" autocomplete="off">
+      </label>
+      <label>Subtitle
+        <input type="text" id="subtitleInput" value="LEONIDA &bull; EST. 2026" maxlength="48" autocomplete="off">
+      </label>
+      <div class="grades" id="grades">
+        <button type="button" data-grade="sunset">Sunset</button>
+        <button type="button" data-grade="neon">Neon</button>
+        <button type="button" data-grade="midnight">Midnight</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>4 &middot; Export</h2>
+      <div class="sizes" id="sizes">
+        <button type="button" data-size="wide">1920 &times; 1080</button>
+        <button type="button" data-size="portrait">1080 &times; 1350</button>
+        <button type="button" data-size="square">1080 &times; 1080</button>
+      </div>
+      <button id="exportBtn" type="button" class="export">Export PNG</button>
+      <p class="note" id="exportNote">Ready.</p>
+    </section>
+  </aside>
 </main>
-<script type="module" src="./src/main.js"></script>
+<footer>Works fully offline. No uploads, no account. Vice Cover Studio makes original cover art in the style of a Vice City poster.</footer>
+<script src="app.js"></script>
 </body>
 </html>
