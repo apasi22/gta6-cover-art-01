@@ -58,6 +58,18 @@ const GRADES = {
     titleMid: '#ffe9a8',
     titleBot: '#b79cff',
   },
+  vivid: {
+    sky: [[0, '#1a0533'], [0.38, '#8b1e6b'], [0.68, '#ff2e63'], [0.88, '#ff7a3c'], [1, '#ffb347']],
+    sun: ['#fff7c0', '#ffb347', '#ff2e63'],
+    accent: '#ff2e63',
+    accent2: '#00e5ff',
+    tint: 'rgba(255,46,99,0.12)',
+    scrim: 'rgba(16,4,32,0.88)',
+    frame: '#ff2e63',
+    titleTop: '#ffffff',
+    titleMid: '#ffd166',
+    titleBot: '#ff2e63',
+  },
 };
 
 /* Layout slots live in panel-area space (x/y/w/h in 0..1). The panel area
@@ -85,6 +97,16 @@ const LAYOUTS = {
     { x: 0.42, y: 0, w: 0.58, h: 0.55 },
     { x: 0.42, y: 0.55, w: 0.58, h: 0.45 },
   ],
+  collage: [
+    { x: 0, y: 0, w: 0.3, h: 0.65 },
+    { x: 0.3, y: 0, w: 0.38, h: 0.23 },
+    { x: 0.68, y: 0, w: 0.32, h: 0.28 },
+    { x: 0.68, y: 0.28, w: 0.32, h: 0.27 },
+    { x: 0, y: 0.65, w: 0.3, h: 0.35 },
+    { x: 0.3, y: 0.57, w: 0.19, h: 0.43 },
+    { x: 0.49, y: 0.57, w: 0.19, h: 0.43 },
+    { x: 0.68, y: 0.55, w: 0.32, h: 0.45 },
+  ],
 };
 
 const SAMPLES = [
@@ -95,8 +117,8 @@ const SAMPLES = [
 // ---------- state ----------
 const state = {
   photos: [], // { id, name, img }
-  layout: 'hero',
-  grade: 'sunset',
+  layout: 'collage',
+  grade: 'vivid',
   title: 'VICE CITY',
   subtitle: 'LEONIDA \u2022 EST. 2026',
   size: 'wide',
@@ -516,14 +538,80 @@ function drawGrain(ctx, W, H) {
   ctx.restore();
 }
 
+// ---------- central badge (original diamond; initials follow the caption) ----------
+function badgeInitials(title) {
+  const words = (title || 'VICE CITY').toUpperCase().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return words[0][0] + words[1][0];
+  return (words[0] || 'VC').slice(0, 2);
+}
+
+function drawBadge(ctx, W, H, grade) {
+  const cx = W * 0.5;
+  const cy = H * 0.47;
+  const bw = W * 0.36;
+  const bh = H * 0.3;
+  ctx.save();
+  // Dark diamond backing so the badge reads cleanly over any panel gap.
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - bh / 2 - 6);
+  ctx.lineTo(cx + bw / 2 + 6, cy);
+  ctx.lineTo(cx, cy + bh / 2 + 6);
+  ctx.lineTo(cx - bw / 2 - 6, cy);
+  ctx.closePath();
+  ctx.fillStyle = '#14081f';
+  ctx.fill();
+  // Diamond with a vivid pink -> violet -> orange gradient.
+  const grad = ctx.createLinearGradient(cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2);
+  grad.addColorStop(0, '#ff2e88');
+  grad.addColorStop(0.5, '#a855f7');
+  grad.addColorStop(1, '#ff7a3c');
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - bh / 2);
+  ctx.lineTo(cx + bw / 2, cy);
+  ctx.lineTo(cx, cy + bh / 2);
+  ctx.lineTo(cx - bw / 2, cy);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = Math.max(8, W * 0.01);
+  ctx.shadowOffsetY = Math.max(4, H * 0.006);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, W * 0.002);
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.stroke();
+  // Caption initials in bold system type.
+  const initials = badgeInitials(state.title);
+  let size = bh * 0.42;
+  const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
+  ctx.font = font(size);
+  while (ctx.measureText(initials).width > bw * 0.6 && size > 12) {
+    size *= 0.92;
+    ctx.font = font(size);
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, size * 0.08);
+  ctx.strokeStyle = '#14081f';
+  ctx.strokeText(initials, cx, cy + size * 0.03);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(initials, cx, cy + size * 0.03);
+  ctx.restore();
+}
+
 // ---------- the cover ----------
 function renderCover(ctx, W, H, st, opts) {
   const grade = GRADES[st.grade];
   const markSelected = !opts || opts.markSelected !== false;
-  // Sky + sun + skyline behind everything.
+  // Sky + skyline behind everything; the sun is drawn over the skyline so
+  // it stays clearly visible (never hidden behind the buildings).
   drawSky(ctx, W, H, grade);
-  drawSun(ctx, W, H, grade);
   drawSkyline(ctx, W, H, grade);
+  drawSun(ctx, W, H, grade);
 
   // Photo panels.
   const rects = panelRects(W, H);
@@ -555,6 +643,9 @@ function renderCover(ctx, W, H, st, opts) {
     ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
     ctx.restore();
   }
+
+  // Central badge over the collage (collage layout only).
+  if (st.layout === 'collage') drawBadge(ctx, W, H, grade);
 
   // Caption scrim across the bottom.
   const scrim = ctx.createLinearGradient(0, H * 0.62, 0, H);
