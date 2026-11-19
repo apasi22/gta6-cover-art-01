@@ -101,37 +101,47 @@ const LAYOUTS = {
     { x: 0.42, y: 0, w: 0.58, h: 0.55 },
     { x: 0.42, y: 0.55, w: 0.58, h: 0.45 },
   ],
-  /* GTA Collage (round 9): exactly 7 panels — one per sample photo, so no
-     photo ever repeats. The 10-panel version showed Marina Man, Heli City
-     and Bike Sunset twice, and the user said "semua fotonya sama" (all the
-     photos are the same). A tall hero on the left, three stacked panels in
-     the center column and three in the right column; the seams are
-     staggered between the two columns for a collage feel. The center panel
-     sits behind the "VI Vice City" badge, like the top entries' key-art
-     posters (the leaderboard's top covers use 5-9 panels, most often five,
-     with one photo per panel and a bold central logo). */
+  /* GTA Collage (round 10): exactly 9 panels — one per sample photo, so no
+     photo ever repeats. The 7-panel version was replaced because the user
+     sent a new reference ("VICE CITY Miami Sunset") and asked for the same
+     name and the same shape: a dense multi-panel collage like the
+     reference, with the top entries' photos plus the reference's own
+     panels (jet ski, cash, neon street, nightclub). A tall hero on the
+     left, four stacked panels in the center column and four in the right
+     column; the big "VICE CITY Miami Sunset" title overlaps the bottom
+     row, like the reference. */
   collage: [
     { x: 0, y: 0, w: 0.3, h: 1 },
-    { x: 0.3, y: 0, w: 0.38, h: 0.24 },
-    { x: 0.68, y: 0, w: 0.32, h: 0.3 },
-    { x: 0.3, y: 0.24, w: 0.38, h: 0.34 },
-    { x: 0.68, y: 0.3, w: 0.32, h: 0.3 },
-    { x: 0.3, y: 0.58, w: 0.38, h: 0.42 },
-    { x: 0.68, y: 0.6, w: 0.32, h: 0.4 },
+    { x: 0.3, y: 0, w: 0.35, h: 0.25 },
+    { x: 0.3, y: 0.25, w: 0.35, h: 0.25 },
+    { x: 0.3, y: 0.5, w: 0.35, h: 0.25 },
+    { x: 0.3, y: 0.75, w: 0.35, h: 0.25 },
+    { x: 0.65, y: 0, w: 0.35, h: 0.25 },
+    { x: 0.65, y: 0.25, w: 0.35, h: 0.25 },
+    { x: 0.65, y: 0.5, w: 0.35, h: 0.25 },
+    { x: 0.65, y: 0.75, w: 0.35, h: 0.25 },
   ],
 };
 
-/* The user's own 7 illustrated photos (their own artwork, supplied by the
-   user) — these are the only sample photos; the kit's Boulevard/Pier
-   samples were removed at the user's request. */
+/* The 9 sample photos (round 10): the same photos the leaderboard's top
+   entries use, cropped from the screenshots the user sent, plus the panels
+   of the "VICE CITY Miami Sunset" reference the user sent. The user
+   ordered these exact photos ("gunakan foto yg ada di sana"). Five come
+   from the top entries' covers: the curly-haired woman, the orange
+   Corvette, the older man with a fishing hat, the helicopter over the
+   city at sunset, the speedboat. Four come from the reference cover:
+   jet skis at sunset, a hand holding cash + poker chips, the neon street
+   with sports cars, the nightclub. Panel i shows photo i. */
 const SAMPLES = [
-  { name: 'Marina Man', src: 'samples/marina-man.jpg' },
-  { name: 'Heli City', src: 'samples/heli-city.jpg' },
-  { name: 'Bike Sunset', src: 'samples/bike-sunset.jpg' },
-  { name: 'Collage', src: 'samples/collage.jpg' },
-  { name: 'Beach Sunset', src: 'samples/beach-sunset.jpg' },
-  { name: 'Vice Bay Woman', src: 'samples/woman-vicebay.jpg' },
-  { name: 'Speedboats', src: 'samples/speedboats.jpg' },
+  { name: 'Woman', src: 'samples/woman.jpg' },
+  { name: 'Helicopter', src: 'samples/heli.jpg' },
+  { name: 'Old Man', src: 'samples/man.jpg' },
+  { name: 'Jet Ski', src: 'samples/jetski.jpg' },
+  { name: 'Cash', src: 'samples/cash.jpg' },
+  { name: 'Neon Street', src: 'samples/neon.jpg' },
+  { name: 'Speedboat', src: 'samples/speedboat.jpg' },
+  { name: 'Nightclub', src: 'samples/nightclub.jpg' },
+  { name: 'Corvette', src: 'samples/car.jpg' },
 ];
 
 // ---------- state ----------
@@ -139,7 +149,7 @@ const state = {
   photos: [], // { id, name, img }
   layout: 'collage',
   grade: 'vivid',
-  title: '',
+  title: 'VICE CITY',
   subtitle: 'LEONIDA \u2022 EST. 2026',
   size: 'wide',
   panels: [], // { photoId, zoom, ox, oy } — one per layout slot
@@ -149,19 +159,21 @@ const state = {
 
 /* Varied default crops per panel slot, so panels do not all show the same
    crop of the same photo. Panel i shows photo i, so crop i is tuned for
-   that photo: portraits (Marina Man, Heli City, Beach Sunset, Vice Bay
-   Woman) have their subjects near the top, so oy stays low for them;
-   landscape shots (Bike Sunset, Speedboats) and the Collage sit nearer
-   the middle. The center slot (3, Collage) crops toward the upper scenes,
-   so its edges still read around the badge that overlaps it. */
+   that photo: the hero woman's face is upper-center (oy low); the
+   helicopter sits in the upper sky (oy low); the old man's face is
+   upper-center; the jet ski and cash are wide strips, so they need
+   little zoom; the neon street's cars sit low (oy high); the speedboat
+   is centered; the nightclub's DJ is center; the Corvette sits low. */
 const PANEL_CROPS = [
-  { zoom: 1.35, ox: 0.32, oy: 0.5 },
-  { zoom: 1.4, ox: 0.6, oy: 0.18 },
-  { zoom: 1.45, ox: 0.5, oy: 0.2 },
-  { zoom: 1.4, ox: 0.5, oy: 0.25 },
-  { zoom: 1.3, ox: 0.42, oy: 0.5 },
-  { zoom: 1.4, ox: 0.65, oy: 0.45 },
-  { zoom: 1.25, ox: 0.35, oy: 0.55 },
+  { zoom: 1.0, ox: 0.5, oy: 0.5 },
+  { zoom: 1.35, ox: 0.5, oy: 0.25 },
+  { zoom: 1.3, ox: 0.5, oy: 0.3 },
+  { zoom: 1.15, ox: 0.5, oy: 0.5 },
+  { zoom: 1.15, ox: 0.55, oy: 0.5 },
+  { zoom: 1.35, ox: 0.5, oy: 0.6 },
+  { zoom: 1.3, ox: 0.5, oy: 0.5 },
+  { zoom: 1.3, ox: 0.5, oy: 0.45 },
+  { zoom: 1.35, ox: 0.5, oy: 0.55 },
 ];
 
 function defaultPanels() {
@@ -474,31 +486,40 @@ function drawPalm(ctx, x, y, s, color) {
 }
 
 function drawTitle(ctx, W, H, grade) {
-  // The bottom title is optional: the default is empty, so a fresh cover
-  // has no white title line at the bottom (the user asked to remove it).
-  // If the user types a title in the editor it is drawn as before.
+  // Round 10: the cover's name, like the "VICE CITY Miami Sunset"
+  // reference the user sent ("nama sama, bentuk sama"). The title is the
+  // caption the app draws — huge gradient letters at the bottom center,
+  // with the pink "Miami Sunset" script under it and the gold "VOL. 06"
+  // seal at its top-left. The central "VI Vice City" badge is gone (the
+  // user asked for the same name as the reference instead). The title
+  // comes from state.title (default "VICE CITY", editable in the editor);
+  // the script line is the reference's tagline and always reads
+  // "Miami Sunset" while a title is shown.
   const text = (state.title || '').toUpperCase();
-  const maxW = W * 0.92;
-  const bandY = H * 0.86;
-  let size = H * 0.115;
+  const cx = W * 0.62;
+  const maxW = W * 0.55;
+  let size = H * 0.14;
+  let bandY = 0;
   if (text) {
-    const font = (s) => `900 ${s}px "Arial Black","Helvetica Neue",Arial,sans-serif`;
+    const font = (s) => `900 ${s}px "Arial Black","DejaVu Sans",sans-serif`;
     ctx.font = font(size);
     while (ctx.measureText(text).width > maxW && size > 12) {
       size *= 0.94;
       ctx.font = font(size);
     }
+    bandY = H * 0.84;
+    // Gradient: yellow top -> orange -> pink bottom (the reference).
     const grad = ctx.createLinearGradient(0, bandY - size, 0, bandY);
-    grad.addColorStop(0, grade.titleTop);
-    grad.addColorStop(0.55, grade.titleMid);
-    grad.addColorStop(1, grade.titleBot);
+    grad.addColorStop(0, '#ffe45c');
+    grad.addColorStop(0.5, '#ffb13c');
+    grad.addColorStop(1, '#ff2e63');
     ctx.save();
-    ctx.translate(W / 2, bandY);
-    ctx.transform(1, 0, -0.06, 1, 0, 0);
+    ctx.translate(cx, bandY);
+    ctx.transform(1, 0, -0.04, 1, 0, 0);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = Math.max(2, size * 0.085);
+    ctx.lineWidth = Math.max(3, size * 0.1);
     ctx.strokeStyle = '#14081f';
     ctx.shadowColor = 'rgba(0,0,0,0.55)';
     ctx.shadowBlur = size * 0.12;
@@ -510,28 +531,102 @@ function drawTitle(ctx, W, H, grade) {
     ctx.fillStyle = grad;
     ctx.fillText(text, 0, 0);
     ctx.restore();
+
+    // Gold "VOL. 06" seal at the title's top-left, like the reference.
+    drawVolSeal(ctx, W, H);
+
+    // "Miami Sunset": pink script under the title. No script font is
+    // installed, so the closest system look is the rounded DejaVu bold
+    // italic, sheared for a flowing slant (the same treatment the old
+    // "Vice City" script used).
+    const scFont = (s) => `italic 700 ${s}px "DejaVu Sans",sans-serif`;
+    let scSize = H * 0.065;
+    ctx.font = scFont(scSize);
+    while (ctx.measureText('Miami Sunset').width > W * 0.5 && scSize > 12) {
+      scSize *= 0.94;
+      ctx.font = scFont(scSize);
+    }
+    const scY = bandY + scSize * 0.95;
+    const scGrad = ctx.createLinearGradient(0, scY - scSize, 0, scY);
+    scGrad.addColorStop(0, '#ff9ae2');
+    scGrad.addColorStop(0.5, '#ff7ad0');
+    scGrad.addColorStop(1, '#ff9a5c');
+    ctx.save();
+    ctx.translate(cx, scY);
+    ctx.transform(1, 0, -0.28, 1, 0, 0);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, scSize * 0.07);
+    ctx.strokeStyle = '#241026';
+    ctx.strokeText('Miami Sunset', 0, 0);
+    ctx.fillStyle = scGrad;
+    ctx.fillText('Miami Sunset', 0, 0);
+    ctx.restore();
   }
 
-  // Subtitle on a tracked-out line under the title. With no title the chip
-  // sits centred on the title band instead, so it does not float low.
+  // Subtitle: a tiny tracked-out line at the very bottom edge, under the
+  // script (it no longer sits on a chip in the title band, because the
+  // big title fills that band now).
   const sub = (state.subtitle || '').toUpperCase();
   if (sub) {
     const spaced = sub.split('').join('\u2009');
-    const subSize = Math.max(10, H * 0.026);
+    const subSize = Math.max(9, H * 0.018);
     ctx.save();
     ctx.font = `700 ${subSize}px "Helvetica Neue",Arial,sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    const w = ctx.measureText(spaced).width;
-    const pad = subSize * 0.9;
-    const chipY = text ? bandY + size * 0.12 : bandY - subSize * 0.95;
-    ctx.fillStyle = 'rgba(20,8,31,0.72)';
-    roundRect(ctx, W / 2 - w / 2 - pad, chipY, w + pad * 2, subSize * 1.9, subSize * 0.5);
-    ctx.fill();
+    ctx.textBaseline = 'bottom';
     ctx.fillStyle = grade.accent2;
-    ctx.fillText(spaced, W / 2, chipY + subSize * 0.42);
+    ctx.fillText(spaced, W / 2, H * 0.985);
     ctx.restore();
   }
+}
+
+// Gold "VOL. 06" seal at the title's top-left (the reference's badge).
+function drawVolSeal(ctx, W, H) {
+  const r = Math.max(10, H * 0.048);
+  const sx = W * 0.30;
+  const sy = H * 0.72;
+  ctx.save();
+  const g = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
+  g.addColorStop(0, '#ffe27a');
+  g.addColorStop(0.7, '#f5b81f');
+  g.addColorStop(1, '#c8891a');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.5, r * 0.08);
+  ctx.strokeStyle = '#8a5c10';
+  ctx.stroke();
+  ctx.fillStyle = '#3a2405';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `700 ${r * 0.34}px "Helvetica Neue",Arial,sans-serif`;
+  ctx.fillText('VOL.', sx, sy - r * 0.28);
+  ctx.font = `900 ${r * 0.52}px "Helvetica Neue",Arial,sans-serif`;
+  ctx.fillText('06', sx, sy + r * 0.3);
+  ctx.restore();
+}
+
+// Five gold stars in a dark chip at the top-left corner (the reference).
+function drawStars(ctx, W, H) {
+  const s = Math.max(10, H * 0.032);
+  const pad = s * 0.45;
+  const w = s * 5 + pad * 2 + s * 0.8;
+  const h = s * 1.7;
+  const x = W * 0.015;
+  const y = H * 0.02;
+  ctx.save();
+  ctx.fillStyle = 'rgba(20,8,31,0.78)';
+  roundRect(ctx, x, y, w, h, h * 0.35);
+  ctx.fill();
+  ctx.fillStyle = '#ffd94d';
+  ctx.font = `${s}px "DejaVu Sans",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('★★★★★', x + w / 2, y + h / 2 + s * 0.05);
+  ctx.restore();
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -557,104 +652,11 @@ function drawGrain(ctx, W, H) {
   ctx.restore();
 }
 
-// Logo treatment (round 7, final): fonts + outline + shadow + gradients,
-// tuned so the lettering blends with the illustrated artwork instead of
-// sitting on it like a pasted sticker. Round 6 used Noto Sans Black (very
-// geometric, angular) with a 0.16x near-black outline and a heavy shadow —
-// the user said it still looked bad and did not blend with the pictures.
-// Three candidates were rendered and compared side by side against the
-// reference close-up: (A) DejaVu Sans Bold / Bold Italic — the roundest
-// bold sans installed, its soft organic curves echo the reference's
-// balloon lettering; (B) Liberation Sans Bold / Bold Italic — clean and
-// rounded but plainer, more "office font"; (C) Noto Sans Display Black —
-// still too geometric and blocky. (A) blends best, so it ships: a thin
-// plum outline (0.10x) and a gentler shadow let the artwork show through
-// around the letters, and the gradient runs pink -> orange across the
-// whole letter like the reference. No script/cursive font is installed
-// on this system (checked fc-list thoroughly), so the rounded DejaVu bold
-// italic, sheared for flow, is the closest system match to the
-// reference's plump script.
-const LOGO = {
-  viFont: (s) => `700 ${s}px "DejaVu Sans",sans-serif`,
-  viStretch: 1.45,
-  vcFont: (s) => `italic 700 ${s}px "DejaVu Sans",sans-serif`,
-  vcShear: -0.28,
-  outlineOuter: 0.10,
-  outlineColor: '#241026',
-  outlineInner: 0.035,
-  shadow: 'rgba(20,5,25,0.5)',
-  shadowBlur: (W) => Math.max(8, W * 0.012),
-  shadowOffY: (H) => Math.max(4, H * 0.008),
-  viStops: [[0, '#ff5ce1'], [0.35, '#ff7ad9'], [0.65, '#ff8a4d'], [1, '#ffb13c']],
-  vcStops: [[0, '#ff9ae2'], [0.5, '#ff7ad0'], [1, '#ff9a5c']],
-};
-function drawBadge(ctx, W, H, grade) {
-  const cx = W * 0.5;
-  const cy = H * 0.46;
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
-  ctx.shadowColor = LOGO.shadow;
-  ctx.shadowBlur = LOGO.shadowBlur(W);
-  ctx.shadowOffsetY = LOGO.shadowOffY(H);
-
-  // Double-outlined text: thin plum outer ring, white inner ring,
-  // gradient fill — the reference logo's look. Reads clearly where it
-  // overlaps the center panels' photos, without the heavy black halo
-  // that made round 6 look pasted on.
-  function logoText(text, x, y, font, size, fill) {
-    ctx.font = font(size);
-    ctx.lineWidth = Math.max(3, size * LOGO.outlineOuter);
-    ctx.strokeStyle = LOGO.outlineColor;
-    ctx.strokeText(text, x, y);
-    ctx.lineWidth = Math.max(1.5, size * LOGO.outlineInner);
-    ctx.strokeStyle = '#ffffff';
-    ctx.strokeText(text, x, y);
-    ctx.fillStyle = fill;
-    ctx.fillText(text, x, y);
-  }
-
-  // "VI": huge and wide, like the reference. Sized by height, then
-  // stretched horizontally; clamped so it never exceeds 66% of the width.
-  const viFont = LOGO.viFont;
-  let viSize = H * 0.30;
-  ctx.font = viFont(viSize);
-  const viNatural = ctx.measureText('VI').width;
-  const viStretch = LOGO.viStretch;
-  const viMaxW = W * 0.66;
-  if (viNatural * viStretch > viMaxW) viSize *= viMaxW / (viNatural * viStretch);
-  const viTop = cy - H * 0.10;
-  const viGrad = ctx.createLinearGradient(0, viTop - viSize * 0.5, 0, viTop + viSize * 0.5);
-  for (const [at, col] of LOGO.viStops) viGrad.addColorStop(at, col);
-  ctx.save();
-  ctx.translate(cx, viTop);
-  ctx.transform(viStretch, 0, 0, 1, 0, 0);
-  logoText('VI', 0, 0, viFont, viSize, viGrad);
-  ctx.restore();
-
-  // "Vice City": script-style pink italic beneath "VI", slightly wider
-  // than the "VI" (like the reference). No script font is installed, so
-  // the closest system look is a rounded bold sans italic, sheared
-  // further for a flowing, handwritten slant.
-  const vcFont = LOGO.vcFont;
-  let vcSize = H * 0.115;
-  ctx.font = vcFont(vcSize);
-  while (ctx.measureText('Vice City').width > W * 0.62 && vcSize > 12) {
-    vcSize *= 0.94;
-    ctx.font = vcFont(vcSize);
-  }
-  const vcY = viTop + viSize * 0.36 + vcSize * 0.30;
-  const vcGrad = ctx.createLinearGradient(0, vcY - vcSize * 0.5, 0, vcY + vcSize * 0.5);
-  for (const [at, col] of LOGO.vcStops) vcGrad.addColorStop(at, col);
-  ctx.save();
-  ctx.translate(cx, vcY);
-  ctx.transform(1, 0, LOGO.vcShear, 1, 0, 0);
-  logoText('Vice City', 0, 0, vcFont, vcSize, vcGrad);
-  ctx.restore();
-
-  ctx.restore();
-}
+// (Round 10: the central "VI Vice City" badge was retired. The user sent
+// the "VICE CITY Miami Sunset" reference and asked for the same name and
+// the same shape, so the cover now carries the big "VICE CITY" title +
+// "Miami Sunset" script at the bottom (drawTitle) instead of a central
+// badge. The DejaVu bold-italic script treatment lives on in drawTitle.)
 
 // ---------- the cover ----------
 function renderCover(ctx, W, H, st, opts) {
@@ -703,16 +705,20 @@ function renderCover(ctx, W, H, st, opts) {
     ctx.restore();
   }
 
-  // Central badge over the collage (collage layout only).
-  if (st.layout === 'collage') drawBadge(ctx, W, H, grade);
+  // Five gold stars at the top-left corner (the reference's chip).
+  drawStars(ctx, W, H);
 
-  // Caption scrim across the bottom.
-  const scrim = ctx.createLinearGradient(0, H * 0.62, 0, H);
+  // Caption scrim across the bottom. Round 10: much lighter and lower
+  // than before — the big "VICE CITY" title carries its own thick dark
+  // outline, so the scrim only needs to give the "Miami Sunset" script
+  // and the tiny subtitle line a little contrast. The old 0.88 scrim
+  // blacked out the bottom-row panels (cash, Corvette) almost entirely.
+  const scrim = ctx.createLinearGradient(0, H * 0.78, 0, H);
   scrim.addColorStop(0, 'rgba(12,4,24,0)');
-  scrim.addColorStop(0.55, grade.scrim);
-  scrim.addColorStop(1, grade.scrim);
+  scrim.addColorStop(0.6, 'rgba(12,4,24,0.30)');
+  scrim.addColorStop(1, 'rgba(12,4,24,0.45)');
   ctx.fillStyle = scrim;
-  ctx.fillRect(0, H * 0.62, W, H * 0.38);
+  ctx.fillRect(0, H * 0.78, W, H * 0.22);
 
   // Palm silhouettes at the bottom corners, behind the title.
   ctx.save();
