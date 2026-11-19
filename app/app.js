@@ -116,9 +116,17 @@ const LAYOUTS = {
   ],
 };
 
+/* The user's own 7 illustrated photos (their own artwork, supplied by the
+   user) — these are the only sample photos; the kit's Boulevard/Pier
+   samples were removed at the user's request. */
 const SAMPLES = [
-  { name: 'Boulevard', src: 'samples/boulevard.jpg' },
-  { name: 'Pier', src: 'samples/pier.jpg' },
+  { name: 'Marina Man', src: 'samples/marina-man.jpg' },
+  { name: 'Heli City', src: 'samples/heli-city.jpg' },
+  { name: 'Bike Sunset', src: 'samples/bike-sunset.jpg' },
+  { name: 'Collage', src: 'samples/collage.jpg' },
+  { name: 'Beach Sunset', src: 'samples/beach-sunset.jpg' },
+  { name: 'Vice Bay Woman', src: 'samples/woman-vicebay.jpg' },
+  { name: 'Speedboats', src: 'samples/speedboats.jpg' },
 ];
 
 // ---------- state ----------
@@ -135,9 +143,11 @@ const state = {
 };
 
 /* Varied default crops per panel slot, so panels do not all show the same
-   crop of the same photo. Faces sit near the top of both sample portraits,
-   so oy stays low; ox and zoom vary per slot. The center pair (slots 8-9)
-   crops toward the outer edges, where the badge does not cover them. */
+   crop of the same photo. Portraits (Marina Man, Heli City, Beach Sunset,
+   Vice Bay Woman) have their subjects near the top, so oy stays low for
+   them; landscape shots (Bike Sunset, Speedboats) and the Collage sit
+   nearer the middle. The center pair (slots 8-9) crops toward the outer
+   edges, where the badge does not cover them. */
 const PANEL_CROPS = [
   { zoom: 1.35, ox: 0.32, oy: 0.5 },
   { zoom: 1.4, ox: 0.6, oy: 0.18 },
@@ -153,14 +163,17 @@ const PANEL_CROPS = [
 
 function defaultPanels() {
   const n = LAYOUTS[state.layout].length;
-  const first = state.photos.length ? state.photos[0].id : null;
   const keep = state.panels;
   const out = [];
   for (let i = 0; i < n; i++) {
     const old = keep[i];
     const crop = PANEL_CROPS[i % PANEL_CROPS.length];
+    // A panel with no photo yet takes the next photo in turn (panel i
+    // gets photo i % photos), so the collage shows different photos in
+    // different panels instead of one photo everywhere.
+    const fallback = state.photos.length ? state.photos[i % state.photos.length].id : null;
     out.push({
-      photoId: old && old.photoId != null ? old.photoId : first,
+      photoId: old && old.photoId != null ? old.photoId : fallback,
       zoom: old ? old.zoom : crop.zoom,
       ox: old ? old.ox : crop.ox,
       oy: old ? old.oy : crop.oy,
@@ -194,6 +207,35 @@ function loadSample(index) {
   img.onload = () => addPhotoImage(img, sample.name);
   img.onerror = () => note('Could not load the sample photo.');
   img.src = sample.src;
+}
+
+/* Load all samples in order (one after the other, so the photo order is
+   deterministic), then spread the panels across the photos: panel i shows
+   photo i % photos, so the collage uses all seven illustrations instead of
+   repeating one. A photo that arrives while panels are empty still fills
+   those panels (addPhotoImage), but the final spread below overwrites
+   that with the varied assignment. */
+function loadAllSamples() {
+  let next = 0;
+  const loadNext = () => {
+    if (next >= SAMPLES.length) {
+      if (state.photos.length) {
+        state.panels = state.panels.map((p, i) => ({
+          zoom: p.zoom, ox: p.ox, oy: p.oy,
+          photoId: state.photos[i % state.photos.length].id,
+        }));
+        refreshPhotoUI();
+        renderPreview();
+      }
+      return;
+    }
+    const sample = SAMPLES[next];
+    const img = new Image();
+    img.onload = () => { addPhotoImage(img, sample.name); next++; loadNext(); };
+    img.onerror = () => { note('Could not load the sample photo.'); next++; loadNext(); };
+    img.src = sample.src;
+  };
+  loadNext();
 }
 
 function loadUserFiles(files) {
@@ -273,8 +315,9 @@ $('fileInput').addEventListener('change', (e) => {
   loadUserFiles(e.target.files);
   e.target.value = '';
 });
-$('sampleBoulevard').addEventListener('click', () => loadSample(0));
-$('samplePier').addEventListener('click', () => loadSample(1));
+document.querySelectorAll('.samples button').forEach((b) => {
+  b.addEventListener('click', () => loadSample(Number(b.dataset.sample)));
+});
 
 document.querySelectorAll('#layouts button').forEach((b) => {
   b.addEventListener('click', () => {
@@ -784,4 +827,4 @@ state.panels = defaultPanels();
 refreshPhotoUI();
 refreshActiveButtons();
 renderPreview();
-loadSample(0);
+loadAllSamples();
